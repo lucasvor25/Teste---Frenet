@@ -1,9 +1,14 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["./e2e/**/*", "./support/**/*"],
-  "exclude": ["./support/component.*"],
   "compilerOptions": {
-    "isolatedModules": false,
-    "types": ["cypress"]
-  }
+    "target": "ES6",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["jest", "node"], // Já foi adicionado
+    "typeRoots": ["node_modules/@types"] // Garante que o TypeScript busque tipos no diretório correto
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx"],
+  "exclude": ["node_modules"]
 }
