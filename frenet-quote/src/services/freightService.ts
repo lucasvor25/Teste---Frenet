@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_URL = "/api/shipping/quote";
-const TOKEN = '1039DC91RE200R440BR9FC3RC0F5BFDCE3FB';
+const API_URL = '/api/shipping/quote';
+const TOKEN = import.meta.env.TOKEN;
 
 export const getFreightQuote = async (formData: any) => {
     try {
