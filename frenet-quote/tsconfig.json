@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
-    "types": ["jest", "node"],  // Certificando que o Jest e Node estão aqui
+    "types": ["jest", "node"],
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"]
@@ -15,6 +15,6 @@
   },
   "include": [
     "src/**/*",
-    "tests/**/*"  // Adicionando a pasta de testes para ser incluída
+    "tests/**/*"
   ]
 }
