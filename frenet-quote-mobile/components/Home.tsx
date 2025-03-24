@@ -1,12 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { cotarFrete } from "../services/frenetService";
+import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FreteCalculator = () => {
+
     const [showResults, setShowResults] = useState(false);
     const [resultData, setResultData] = useState<any>(null);
-    const { control, handleSubmit, formState: { errors, isValid }, setValue, reset } = useForm({
+    const [historico, setHistorico] = useState<any[]>([]);
+
+    const { control, handleSubmit, formState: { errors, isValid }, reset } = useForm({
         defaultValues: {
             SellerCEP: "",
             RecipientCEP: "",
@@ -19,6 +24,31 @@ const FreteCalculator = () => {
         },
         mode: "onChange",
     });
+
+    const carregarHistorico = async () => {
+        try {
+            const storedHistorico = await AsyncStorage.getItem('historico');
+            if (storedHistorico) {
+                setHistorico(JSON.parse(storedHistorico));
+            }
+        } catch (error) {
+            console.error("Erro ao carregar o histórico", error);
+        }
+    };
+
+    const salvarHistorico = async (novaCotacao: any) => {
+        try {
+            const updatedHistorico = [...historico, novaCotacao];
+            await AsyncStorage.setItem('historico', JSON.stringify(updatedHistorico));
+            setHistorico(updatedHistorico);
+        } catch (error) {
+            console.error("Erro ao salvar o histórico", error);
+        }
+    };
+
+    useEffect(() => {
+        carregarHistorico();
+    }, []);
 
     const onSubmit = async (data: any) => {
         const requestData = {
@@ -40,9 +70,17 @@ const FreteCalculator = () => {
 
         try {
             const result = await cotarFrete(requestData);
-            console.log("result", result)
+
             setResultData(result);
             setShowResults(true);
+
+            const cotacao = {
+                Carrier: result?.ShippingSevicesArray?.[0]?.Carrier,
+                ShippingPrice: result?.ShippingSevicesArray?.[0]?.ShippingPrice,
+                deliveryTime: result?.ShippingSevicesArray?.[0]?.deliveryTime,
+            };
+
+            salvarHistorico(cotacao);
         } catch (error) {
             Alert.alert("Erro", "Não foi possível buscar a cotação.");
         }
@@ -64,13 +102,13 @@ const FreteCalculator = () => {
                             control={control}
                             name="SellerCEP"
                             rules={{
-                                required: "CEP do Vendedor é obrigatório",
+                                required: "CEP de origem é obrigatório",
                                 minLength: { value: 8, message: "CEP deve ter 8 dígitos" },
                                 maxLength: { value: 8, message: "CEP deve ter 8 dígitos" },
                             }}
                             render={({ field: { onChange, value } }) => (
                                 <TextInput
-                                    placeholder="CEP do Vendedor"
+                                    placeholder="CEP de origem"
                                     value={value}
                                     onChangeText={onChange}
                                     style={[styles.input, errors.SellerCEP && styles.errorInput]}
@@ -84,13 +122,13 @@ const FreteCalculator = () => {
                             control={control}
                             name="RecipientCEP"
                             rules={{
-                                required: "CEP do Destinatário é obrigatório",
+                                required: "CEP de destino é obrigatório",
                                 minLength: { value: 8, message: "CEP deve ter 8 dígitos" },
                                 maxLength: { value: 8, message: "CEP deve ter 8 dígitos" },
                             }}
                             render={({ field: { onChange, value } }) => (
                                 <TextInput
-                                    placeholder="CEP do Destinatário"
+                                    placeholder="CEP de destino"
                                     value={value}
                                     onChangeText={onChange}
                                     style={[styles.input, errors.RecipientCEP && styles.errorInput]}
@@ -184,30 +222,41 @@ const FreteCalculator = () => {
                             title="Calcular Frete"
                             onPress={handleSubmit(onSubmit)}
                             color="#007BFF"
-                            disabled={!isValid} // Desativa o botão se o formulário não for válido
+                            disabled={!isValid}
                         />
                     </View>
+
+                    {historico.length > 0 && (
+                        <View style={styles.historicoBox}>
+                            <Text style={styles.title}>Histórico</Text>
+                            {historico.map((item, index) => (
+                                <View key={index} style={styles.historicoItem}>
+                                    <Text>Empresa: {item.Carrier}</Text>
+                                    <Text>Preço: R${item.ShippingPrice}</Text>
+                                    <Text>Tempo de Entrega: {item.deliveryTime} dias</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
                 </View>
             ) : (
-                // Tela de Resultados da Cotação
                 <View>
                     <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                        <Text style={styles.backText}>← Voltar</Text>
+                        <FontAwesome name="arrow-left" size={30} color="#007BFF" />
                     </TouchableOpacity>
                     <Text style={styles.title}>Resultado da Cotação</Text>
 
-                    {resultData?.length && (
+                    {resultData?.ShippingSevicesArray?.length && (
                         <View style={styles.resultBox}>
                             {
-                                resultData?.ShippingSevicesArray?.map((res: any) => (
-                                    <>
+                                resultData?.ShippingSevicesArray?.map((res: any, index: number) => (
+                                    <React.Fragment key={index}>
                                         <Text style={styles.resultItem}>Empresa: {res.Carrier}</Text>
                                         <Text style={styles.resultItem}>Preço: R${res.ShippingPrice}</Text>
                                         <Text style={styles.resultItem}>Tempo de Entrega: {res.deliveryTime} dias</Text>
-                                    </>
+                                    </React.Fragment>
                                 ))
                             }
-
                         </View>
                     )}
                 </View>
@@ -223,8 +272,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     backButton: {
-        marginBottom: 20,
-        paddingLeft: 10,
+        marginBottom: 20
     },
     backText: {
         fontSize: 16,
@@ -283,6 +331,21 @@ const styles = StyleSheet.create({
     resultItem: {
         fontSize: 18,
         marginBottom: 10,
+    },
+    historicoBox: {
+        marginTop: 30,
+        backgroundColor: "#fff",
+        padding: 20,
+        borderRadius: 10,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    historicoItem: {
+        marginBottom: 10,
+        fontSize: 16,
     },
 });
 
