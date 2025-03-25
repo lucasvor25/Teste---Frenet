@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import Home from '../../components/Home';
+import Home from '../../components/form/Home';
 
 export default function TabLayout() {
   return (

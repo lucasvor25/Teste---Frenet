@@ -1,7 +1,7 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
-import Home from "../../components/Home";
-import { cotarFrete } from "../../services/frenetService";
+import { render, fireEvent } from "@testing-library/react-native";
+import Home from "../form/Home";
+import { quoteShipping } from "../../services/frenetService";
 import axios from "axios";
 import Constants from "expo-constants";
 
@@ -14,8 +14,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 jest.mock("axios");
 
-describe("Test cotarFrete", () => {
-    it("should call cotarFrete and return the mocked response", async () => {
+describe("Test quoteShipping", () => {
+    it("should call quoteShipping and return the mocked response", async () => {
 
         (axios.post as jest.Mock).mockResolvedValue({
             data: {
@@ -48,7 +48,7 @@ describe("Test cotarFrete", () => {
             RecipientCountry: "BR",
         };
 
-        const result = await cotarFrete(requestData);
+        const result = await quoteShipping(requestData);
 
         expect(axios.post).toHaveBeenCalledWith(
             "https://private-anon-b42bafcbb4-frenetapi.apiary-mock.com/shipping/quote",

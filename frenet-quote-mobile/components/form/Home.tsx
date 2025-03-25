@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import { cotarFrete } from "../services/frenetService";
+import { quoteShipping } from "../../services/frenetService";
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -9,7 +9,7 @@ const FreteCalculator = () => {
 
     const [showResults, setShowResults] = useState(false);
     const [resultData, setResultData] = useState<any>(null);
-    const [historico, setHistorico] = useState<any[]>([]);
+    const [history, setHistory] = useState<any[]>([]);
 
     const { control, handleSubmit, formState: { errors, isValid }, reset } = useForm({
         defaultValues: {
@@ -25,29 +25,29 @@ const FreteCalculator = () => {
         mode: "onChange",
     });
 
-    const carregarHistorico = async () => {
+    const loadHistory = async () => {
         try {
-            const storedHistorico = await AsyncStorage.getItem('historico');
-            if (storedHistorico) {
-                setHistorico(JSON.parse(storedHistorico));
+            const storedHistory = await AsyncStorage.getItem('history');
+            if (storedHistory) {
+                setHistory(JSON.parse(storedHistory));
             }
         } catch (error) {
             console.error("Erro ao carregar o histórico", error);
         }
     };
 
-    const salvarHistorico = async (novaCotacao: any) => {
+    const saveHistory = async (newQuote: any) => {
         try {
-            const updatedHistorico = [...historico, novaCotacao];
-            await AsyncStorage.setItem('historico', JSON.stringify(updatedHistorico));
-            setHistorico(updatedHistorico);
+            const updatedHistorico = [...history, newQuote];
+            await AsyncStorage.setItem('history', JSON.stringify(updatedHistorico));
+            setHistory(updatedHistorico);
         } catch (error) {
             console.error("Erro ao salvar o histórico", error);
         }
     };
 
     useEffect(() => {
-        carregarHistorico();
+        loadHistory();
     }, []);
 
     const onSubmit = async (data: any) => {
@@ -69,18 +69,18 @@ const FreteCalculator = () => {
         };
 
         try {
-            const result = await cotarFrete(requestData);
+            const result = await quoteShipping(requestData);
 
             setResultData(result);
             setShowResults(true);
 
-            const cotacao = {
+            const quote = {
                 Carrier: result?.ShippingSevicesArray?.[0]?.Carrier,
                 ShippingPrice: result?.ShippingSevicesArray?.[0]?.ShippingPrice,
                 deliveryTime: result?.ShippingSevicesArray?.[0]?.deliveryTime,
             };
 
-            salvarHistorico(cotacao);
+            saveHistory(quote);
         } catch (error) {
             Alert.alert("Erro", "Não foi possível buscar a cotação.");
         }
@@ -226,10 +226,10 @@ const FreteCalculator = () => {
                         />
                     </View>
 
-                    {historico.length > 0 && (
+                    {history.length > 0 && (
                         <View style={styles.historicoBox}>
                             <Text style={styles.title}>Histórico</Text>
-                            {historico.map((item, index) => (
+                            {history.map((item, index) => (
                                 <View key={index} style={styles.historicoItem}>
                                     <Text>Empresa: {item.Carrier}</Text>
                                     <Text>Preço: R${item.ShippingPrice}</Text>
