@@ -8,6 +8,7 @@ Instruções para rodar o projeto
 
  - Apos baixar o repo do github, entre na pasta do repo e de um cd frenet-quote-mobile
  - Dentro da pasta frenet-quote-mobile de um npm i --force
+ - Crie um arquivo chamado .env e dentro desse arquivo coloque API_TOKEN='Seu token que voce pegou no site da frenet aqui'
  - Voce vai precisar baixar o Android Studio para visualizar essa versao mobile
  - No seu terminal digite npx expo start
  - Abra o Android Studio, ao final do npx expo start no seu terminal basta digitar a tecla A.
